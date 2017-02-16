@@ -1126,6 +1126,7 @@ def changelog(repository, revlist=None,
                 "author": commit.author_name,
                 "subject": subject_process(commit.subject),
                 "body": body_process(commit.body),
+                "commit": commit,
             })
 
         ## Flush current version
