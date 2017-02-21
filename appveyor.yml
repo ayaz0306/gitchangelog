@@ -19,5 +19,5 @@ build: false
 
 test_script:
   - "python src\\gitchangelog\\gitchangelog.py --debug"
-  - "python src\\gitchangelog\\gitchangelog.py --debug show e98a0fe8^^..e98a0fe8"
+  - "python src\\gitchangelog\\gitchangelog.py --debug e98a0fe8^^..e98a0fe8"
 
