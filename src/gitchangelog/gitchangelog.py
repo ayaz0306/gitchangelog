@@ -151,7 +151,6 @@ def format_last_exception(prefix="  | "):
         for line in traceback.format_exc().strip().split('\n'))
 
 
-
 ##
 ## config file functions
 ##
@@ -1204,13 +1203,12 @@ def versions_data_iter(repository, revlist=None,
 
     ## Hash to speedup lookups
     versions_done = {}
-
     excludes = [rev[1:]
                 for rev in swrap("git rev-parse --rev-only %s --"
                                  % " ".join(protect_rev(rev)
                                             for rev in revlist)).split("\n")
                 if rev.startswith("^")] if revlist else []
-    ## Note that ``--reverse -n 1`` still returns the first and not
+
     ## the last element
     contains = swrap("git rev-list %s"
                      % " ".join(protect_rev(rev)
@@ -1233,7 +1231,7 @@ def versions_data_iter(repository, revlist=None,
         max_rev = repository.commit(swrap(
             "git rev-list -n 1 %s"
             % " ".join(protect_rev(rev)
-                       for rev in revlist))) if revlist else None
+                       for rev in revlist)))
         new_tags = []
         for tag in tags:
             new_tags.append(tag)
@@ -1418,10 +1416,10 @@ def parse_cmd_line(usage, description, epilog, exname, version):
             continue
         if arg == "show":
             warn("'show' positional argument is deprecated.")
-            argv += sys.argv[i+2:]
+            argv += sys.argv[i + 2:]
             break
         else:
-            argv += sys.argv[i+1:]
+            argv += sys.argv[i + 1:]
             break
 
     return parser.parse_args(argv)
