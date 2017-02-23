@@ -723,7 +723,7 @@ class GitCommit(SubGitObjectMixin):
         if not isinstance(value, GitCommit):
             value = self._repos.commit(value)
         try:
-            self.swrap("git merge-base --is-ancestor '%s' '%s'"
+            self.swrap("git merge-base --is-ancestor %s %s"
                        % (self.sha1, value.sha1))
             return True
         except ShellError:
@@ -773,16 +773,16 @@ class GitConfig(SubGitObjectMixin):
 
         >>> repos.swrap.mock_returns = "bar"
         >>> cfg.foo
-        Called gitRepos.swrap("git config 'foo'")
+        Called gitRepos.swrap('git config "foo"')
         'bar'
         >>> cfg["foo"]
-        Called gitRepos.swrap("git config 'foo'")
+        Called gitRepos.swrap('git config "foo"')
         'bar'
         >>> cfg.get("foo")
-        Called gitRepos.swrap("git config 'foo'")
+        Called gitRepos.swrap('git config "foo"')
         'bar'
         >>> cfg["foo.wiz"]
-        Called gitRepos.swrap("git config 'foo.wiz'")
+        Called gitRepos.swrap('git config "foo.wiz"')
         'bar'
 
     Notice that you can't use attribute search in subsection as ``cfg.foo.wiz``
@@ -792,7 +792,7 @@ class GitConfig(SubGitObjectMixin):
     Nevertheless, you can do:
 
         >>> getattr(cfg, "foo.wiz")
-        Called gitRepos.swrap("git config 'foo.wiz'")
+        Called gitRepos.swrap('git config "foo.wiz"')
         'bar'
 
     Default values
@@ -805,7 +805,7 @@ class GitConfig(SubGitObjectMixin):
         ...                                      errlvl=1, out="", err="")
 
         >>> getattr(cfg, "foo", "default")
-        Called gitRepos.swrap("git config 'foo'")
+        Called gitRepos.swrap('git config "foo"')
         'default'
 
         >>> cfg["foo"]  ## doctest: +ELLIPSIS
@@ -819,11 +819,11 @@ class GitConfig(SubGitObjectMixin):
         AttributeError...
 
         >>> cfg.get("foo", "default")
-        Called gitRepos.swrap("git config 'foo'")
+        Called gitRepos.swrap('git config "foo"')
         'default'
 
         >>> print("%r" % cfg.get("foo"))
-        Called gitRepos.swrap("git config 'foo'")
+        Called gitRepos.swrap('git config "foo"')
         None
 
     """
@@ -832,7 +832,7 @@ class GitConfig(SubGitObjectMixin):
         super(GitConfig, self).__init__(repos)
 
     def __getattr__(self, label):
-        cmd = "git config %r" % str(label)
+        cmd = "git config %s" % protect_rev(str(label))
         try:
             res = self.swrap(cmd)
         except ShellError as e:
@@ -926,7 +926,7 @@ class GitRepos(object):
 
         """
         if contains:
-            tags = self.swrap("git tag -l --contains \"%s\"" % contains).split("\n")
+            tags = self.swrap("git tag -l --contains %s" % protect_rev(contains)).split("\n")
         else:
             tags = self.swrap('git tag -l').split("\n")
         ## Should we use new version name sorting ?  refering to :
