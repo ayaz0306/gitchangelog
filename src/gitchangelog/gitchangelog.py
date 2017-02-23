@@ -726,7 +726,9 @@ class GitCommit(SubGitObjectMixin):
             self.swrap("git merge-base --is-ancestor %s %s"
                        % (self.sha1, value.sha1))
             return True
-        except ShellError:
+        except ShellError as e:
+            if e.errlvl != 1:
+                raise
             return False
 
     def __lt__(self, value):
