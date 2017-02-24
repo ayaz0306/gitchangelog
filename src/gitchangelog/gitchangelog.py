@@ -571,7 +571,7 @@ class GitCommit(SubGitObjectMixin):
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.subject
-        Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
+        Called gitRepos.swrap('git log -n 1 "HEAD" --pretty=format:...')
         'fee fie foh'
         >>> head.author_name
         'John Smith'
@@ -593,7 +593,7 @@ class GitCommit(SubGitObjectMixin):
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.trailer_change_id
-        Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
+        Called gitRepos.swrap('git log -n 1 "HEAD" --pretty=format:...')
         '1234'
         >>> head.trailer_value_x
         'Supports multi\nline values'
@@ -610,7 +610,7 @@ class GitCommit(SubGitObjectMixin):
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.trailer_co_authored_by
-        Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
+        Called gitRepos.swrap('git log -n 1 "HEAD" --pretty=format:...')
         ['Bob', 'Alice', 'Jack']
 
 
@@ -629,7 +629,7 @@ class GitCommit(SubGitObjectMixin):
 
         >>> head = GitCommit(repos, "HEAD")
         >>> head.author_names
-        Called gitRepos.swrap('git log -n 1 HEAD --pretty=format:...')
+        Called gitRepos.swrap('git log -n 1 "HEAD" --pretty=format:...')
         ['Alice', 'Bob', 'Jack', 'John Smith']
 
     Notice that they are printed in alphabetical order.
@@ -667,9 +667,12 @@ class GitCommit(SubGitObjectMixin):
                                   for l in missing_attrs)
             try:
                 ret = self.swrap("git log -n 1 %s --pretty=format:%s --"
-                                 % (identifier, aformat))
+                                 % (protect_rev(identifier),
+                                    protect_rev(aformat)))
             except ShellError:
-                raise ValueError("Given commit identifier %s doesn't exists"
+                if DEBUG:
+                    raise
+                raise ValueError("Given commit identifier %r doesn't exists"
                                  % self.identifier)
             attr_values = ret.split("\x00")
             for attr, value in zip(missing_attrs, attr_values):
@@ -1211,14 +1214,17 @@ def versions_data_iter(repository, revlist=None,
                                             for rev in revlist)).split("\n")
                 if rev.startswith("^")] if revlist else []
 
-    ## the last element
-    contains = swrap("git rev-list %s"
-                     % " ".join(protect_rev(rev)
-                                for rev in revlist)
-                     ).split("\n")[-1] if revlist else None
+    revs = swrap("git rev-list %s"
+                 % " ".join(protect_rev(rev)
+                            for rev in revlist)
+                 ).split("\n") if revlist else []
+    revs = [rev for rev in revs if rev != ""]
+
+    if revlist and not revs:
+        die("No commits matching given revlist: %s" % (" ".join(revlist), ))
 
     tags = [tag
-            for tag in repository.tags(contains=contains)
+            for tag in repository.tags(contains=revs[-1] if revs else None)
             if re.match(tag_filter_regexp, tag.identifier)]
 
     if not tags:
@@ -1230,10 +1236,7 @@ def versions_data_iter(repository, revlist=None,
     tags.append(repository.commit("HEAD"))
 
     if revlist:
-        max_rev = repository.commit(swrap(
-            "git rev-list -n 1 %s"
-            % " ".join(protect_rev(rev)
-                       for rev in revlist)))
+        max_rev = repository.commit(revs[0])
         new_tags = []
         for tag in tags:
             new_tags.append(tag)
