@@ -449,8 +449,8 @@ def cmd(command, env=None, shell=True):
               universal_newlines=False)
     stdout, stderr = p.communicate()
     return (
-        stdout.decode(getattr(sys.stdout, "encoding", None) or _preferred_encoding),
-        stderr.decode(getattr(sys.stderr, "encoding", None) or _preferred_encoding),
+        stdout.decode(getattr(sys.stdout, "encoding", _preferred_encoding)),
+        stderr.decode(getattr(sys.stderr, "encoding", _preferred_encoding)),
         p.returncode)
 
 
