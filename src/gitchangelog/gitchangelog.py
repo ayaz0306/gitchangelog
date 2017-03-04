@@ -443,6 +443,25 @@ class Proc(Popen):
 
 
 def cmd(command, env=None, shell=True):
+
+    if not PY3 and WIN32:
+        ## Hmm, for some reason even if command is NOT unicode, it
+        ## gets re-encoded in utf-8. So we must cheat here and
+        ## return non-unicode ready to be encoded.
+        encoding = 'raw_unicode_escape'
+        encode = lambda s: s.encode(encoding) \
+                 if isinstance(s, unicode) else \
+                 s
+        if shell:
+            command = encode(command)
+        else:
+            command = [encode(arg) for arg in command]
+        if env:
+            for k, v in env.items():
+                if isinstance(k, unicode):
+                    del env[k]
+                env[encode(k)] = encode(v)
+
     p = Popen(command, shell=shell,
               stdin=PIPE, stdout=PIPE, stderr=PIPE,
               close_fds=PLT_CFG['close_fds'], env=env,
